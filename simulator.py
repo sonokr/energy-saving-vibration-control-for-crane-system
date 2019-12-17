@@ -80,9 +80,9 @@ def main(args):
     DEFAULT = False
 
     if DEFAULT:
-        a = [1.0, 0.0, 0.0, 0.0, 0.0]
+        a = [-0.0614506, -0.36800381,  0.41197453,  0.21663605, -0.33973749]
     else:
-        param_path = './results/{}/{}/{}'.format(args[1], args[2], args[3])
+        param_path = './results/{}'.format(args[1])
         with open(param_path) as f:
             reader = csv.reader(f)
             a = [float(row[0]) for row in reader]
@@ -103,11 +103,32 @@ def main(args):
 
     print('係数:')
     pprint.pprint(a)
-    print('\n残留振動[deg]: {}'.format(np.max(abs(180*vib[0, Nte+1:]/np.pi))))
+    print('\n残留振動[deg]: {}'.format(np.amax(abs(180*vib[0, Nte+1:]/np.pi))))
     print('エネルギー[J]: {}'.format(ene))
 
     plot_graph([[t_traj[0:2*Nrk+1:2, 0], 'x'],
                 [180*vib[0, :]/np.pi, 'θ']])
+
+    # 残留振動の加速度とトロリの加速度が打ち消し合うかどうか比較
+    x_ = t_traj[0:2*Nrk+1:2,0]
+    dx_ = t_traj[0:2*Nrk+1:2,1]
+    ddx_ = t_traj[0:2*Nrk+1:2,2]
+    l_ = c_traj[0:2*Nrk+1:2,0]
+    dl_ = c_traj[0:2*Nrk+1:2,1]
+    ddl_ = c_traj[0:2*Nrk+1:2,2]
+    s_ = 180*vib[0,:]/np.pi
+    ds_ = 180*vib[1,:]/np.pi
+    dds_ = (-(2*dl_*ds_ + 9.81*np.sin(s_) + ddx_*np.cos(s_)) / l_)
+
+    plt.title("Condition2 PSO3")
+    plt.plot(np.linspace(0.0, TE, 2*Nte+1), (M+m)*ddx_, label="ddx")
+    # plt.plot(np.linspace(0.0, TE, 2*Nte+1), m*ddl_*np.sin(s_), label="2")
+    plt.plot(np.linspace(0.0, TE, 2*Nte+1), m*l_*dds_*np.cos(s_), label="dds")
+    # plt.plot(np.linspace(0.0, TE, 2*Nte+1), 2*m*dl_*ds_*np.cos(s_))
+    # plt.plot(np.linspace(0.0, TE, 2*Nte+1), -1*m*l_*ds_**2*np.sin(s_))
+    plt.legend()
+
+    plt.show()
 
 
 if __name__ == '__main__':
